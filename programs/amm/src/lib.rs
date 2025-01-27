@@ -49,14 +49,13 @@ pub mod amm {
 //     Ok(())
 // }
 
-// pub fn swap(
-//     ctx: Context<Swap>,
-//     amount: u64,
-//     min_receive: u64,
-//     is_x: bool, /*, expiration: i64 */
-// ) -> Result<()> {
-//     // deposit_token()?;
-//     // withdraw_token()
-//     Ok(())
-// }
+    pub fn swap(
+        ctx: Context<Swap>,
+        amount: u64,
+        min_receive: u64,
+        is_x: bool, /*, expiration: i64 */
+    ) -> Result<()> {
+        ctx.accounts.swap(amount, min_receive, is_x)?;
+        Ok(())
+    }
 }
