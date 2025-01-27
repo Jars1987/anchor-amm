@@ -8,7 +8,9 @@ use anchor_spl::{
 
 use constant_product_curve;
 
-use crate::{error::AmmError, Config};
+use crate::errors::AmmError;
+use crate::state::Config;
+use crate::{assert_non_zero, assert_not_expired, assert_not_locked};
 
 #[derive(Accounts)]
 #[instruction(seed: u64)]
@@ -20,7 +22,7 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         seeds = [b"lp", config.key().as_ref()],
-        bump=config.lp_bump,
+        bump=config.mint_lp_bump,
         mint::authority=config,
         mint::decimals=6
     )]
@@ -78,7 +80,7 @@ pub struct Deposit<'info> {
 }
 
 impl<'info> Deposit<'info> {
-    pub fn deposit(&mut self, amount: u64, max_x: u64, max_y: u64) -> Result<()> {
+    pub fn deposit(&mut self, amount: u64, max_x: u64, max_y: u64, expiration: i64) -> Result<()> {
         assert_non_zero!([amount, max_x, max_y]);
         assert_not_locked!(self.config.locked);
         assert_not_expired!(expiration);
@@ -131,7 +133,7 @@ impl<'info> Deposit<'info> {
         transfer_checked(ctx, amount, decimals)?;
         Ok(())
     }
-    
+
     pub fn mint_lp_tokens(&mut self, amount: u64) -> Result<()> {
         let accounts = MintTo {
             mint: self.mint_lp.to_account_info(),

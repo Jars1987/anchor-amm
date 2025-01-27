@@ -6,6 +6,7 @@ use anchor_spl::{
 use constant_product_curve::{ConstantProduct,LiquidityPair};
 
 use crate::state::Config;
+use crate::errors::AmmError;
 
 #[derive(Accounts)]
 pub struct Swap<'info> {
@@ -90,8 +91,6 @@ impl<'info> Swap<'info> {
         self.withdraw_tokens(res.withdraw,is_x)?;
         Ok(())
     }
-    
-
      
     pub fn deposit_tokens(&mut self, amount: u64, is_x: bool) -> Result<()> {
        
@@ -99,13 +98,13 @@ impl<'info> Swap<'info> {
         let (mint, user_ata, vault, decimals) = match is_x {
             true => (
                 self.mint_x.to_account_info(),
-                self.mint_x.to_account_info(),
+                self.user_ata_x.to_account_info(),
                 self.vault_x.to_account_info(),
                 self.mint_x.decimals,
             ),
             false => (
                 self.mint_y.to_account_info(),
-                self.mint_y.to_account_info(),
+                self.user_ata_y.to_account_info(),
                 self.vault_y.to_account_info(),
                 self.mint_y.decimals,
             ),
@@ -124,10 +123,6 @@ impl<'info> Swap<'info> {
        
     }
 
-     
-
-
-     
     pub fn withdraw_tokens(&mut self, amount: u64, is_x: bool) -> Result<()> {
        
       
@@ -152,14 +147,12 @@ impl<'info> Swap<'info> {
             authority: self.config.to_account_info(),
         };
 
-        let maker = self.config.maker.to_bytes();
         let mint_x = self.mint_x.key().to_bytes();
         let mint_y = self.mint_y.key().to_bytes();
         let seed = self.config.seed.to_le_bytes();
 
-        let seeds = [            
+        let seeds = [            //this should have a maker in the seeds and the seed saved in the config
             b"config",
-            maker.as_ref(),
             mint_x.as_ref(),
             mint_y.as_ref(),
             seed.as_ref(),

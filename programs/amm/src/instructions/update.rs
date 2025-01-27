@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::Config;
+use crate::state::Config;
 
 #[derive(Accounts)]
 pub struct UpdateConfig<'info> {

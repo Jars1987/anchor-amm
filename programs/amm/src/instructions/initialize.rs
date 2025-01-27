@@ -49,6 +49,7 @@ pub struct Initialize<'info> {
 			init,
 			payer = maker,
 			space = 8 + Config::INIT_SPACE,
+             //this should have a maker in the seeds and the seed saved in the config
 			seeds = [b"config", mint_x.key().as_ref(), mint_y.key().as_ref(), seed.to_le_bytes().as_ref()],
 			bump
 		)]
@@ -73,7 +74,6 @@ impl<'info> Initialize<'info> {
         Ok(())
     }
 
-   */
 }
 
 
