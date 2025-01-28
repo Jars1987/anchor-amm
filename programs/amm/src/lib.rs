@@ -23,7 +23,7 @@ pub mod amm {
         seed: u64,
         fee: u16,
         amount_x: u64,
-        amount_y: u64,
+        amount_y: u64
     ) -> Result<()> {
         ctx.accounts.init_config(seed, fee, ctx.bumps.config, ctx.bumps.mint_lp)?;
         Ok(())
@@ -33,29 +33,23 @@ pub mod amm {
     pub fn deposit(
         ctx: Context<Deposit>,
         amount: u64, // amount of LP token to claim
-        max_x: u64,  // max amount of X we are willing to deposit
-        max_y: u64,  // max amount of Y we are willing to deposit
-        expiration: i64,
+        max_x: u64, // max amount of X we are willing to deposit
+        max_y: u64, // max amount of Y we are willing to deposit
+        expiration: i64
     ) -> Result<()> {
         ctx.accounts.deposit(amount, max_x, max_y, expiration)?;
         Ok(())
     }
 
+    // // Burn LP tokens to withdraw liquidity
+    // pub fn withdraw(ctx: Context<Withdraw>, amount: u64, min_x: u64, min_y: u64) -> Result<()> {
+    //     // burn_lp_token(amount)?;
+    //     // withdraw_tokens(amount)
+    //     Ok(())
+    // }
 
-// // Burn LP tokens to withdraw liquidity
-// pub fn withdraw(ctx: Context<Withdraw>, amount: u64, min_x: u64, min_y: u64) -> Result<()> {
-//     // burn_lp_token(amount)?;
-//     // withdraw_tokens(amount)
-//     Ok(())
-// }
-
-    pub fn swap(
-        ctx: Context<Swap>,
-        amount: u64,
-        min_receive: u64,
-        is_x: bool, /*, expiration: i64 */
-    ) -> Result<()> {
-        ctx.accounts.swap(amount, min_receive, is_x)?;
+    pub fn swap(ctx: Context<Swap>, is_x: bool, amount: u64, min_receive: u64) -> Result<()> {
+        ctx.accounts.swap(is_x, amount, min_receive)?;
         Ok(())
     }
 }
