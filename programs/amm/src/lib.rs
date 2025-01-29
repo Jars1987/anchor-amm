@@ -22,8 +22,7 @@ pub mod amm {
         ctx: Context<Initialize>,
         seed: u64,
         fee: u16,
-        amount_x: u64,
-        amount_y: u64
+        authority: Option<Pubkey>
     ) -> Result<()> {
         ctx.accounts.init_config(seed, fee, ctx.bumps.config, ctx.bumps.mint_lp)?;
         Ok(())

@@ -2,7 +2,13 @@ use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{
-        mint_to, transfer_checked, Mint, MintTo, TokenAccount, TokenInterface, TransferChecked,
+        mint_to,
+        transfer_checked,
+        Mint,
+        MintTo,
+        TokenAccount,
+        TokenInterface,
+        TransferChecked,
     },
 };
 
@@ -10,7 +16,7 @@ use constant_product_curve;
 
 use crate::errors::AmmError;
 use crate::state::Config;
-use crate::{assert_non_zero, assert_not_expired, assert_not_locked};
+use crate::{ assert_non_zero, assert_not_expired, assert_not_locked };
 
 #[derive(Accounts)]
 #[instruction(seed: u64)]
@@ -49,24 +55,24 @@ pub struct Deposit<'info> {
     pub provider_ata_lp: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
-        init,
-        payer=provider,
+        init_if_needed,
+        payer = provider,
         associated_token::mint = mint_x,
         associated_token::authority = config
     )]
     pub vault_x: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
-        init,
-        payer=provider,
+        init_if_needed,
+        payer = provider,
         associated_token::mint = mint_y,
         associated_token::authority = config
     )]
     pub vault_y: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
-        seeds=[
+        mut,
+        seeds = [
             b"config",
-            provider.key().to_bytes().as_ref(),
             mint_x.key().to_bytes().as_ref(),
             mint_y.key().to_bytes().as_ref(),
             seed.to_le_bytes().as_ref(),
@@ -88,14 +94,15 @@ impl<'info> Deposit<'info> {
         let (x, y) = match self.vault_x.amount + self.vault_y.amount + self.mint_lp.supply == 0 {
             true => (max_x, max_y),
             false => {
-                let amounts = constant_product_curve::ConstantProduct::xy_deposit_amounts_from_l(
-                    max_x,
-                    max_y,
-                    self.mint_lp.supply,
-                    amount,
-                    self.mint_lp.decimals as u32,
-                )
-                .map_err(AmmError::from)?;
+                let amounts = constant_product_curve::ConstantProduct
+                    ::xy_deposit_amounts_from_l(
+                        max_x,
+                        max_y,
+                        self.mint_lp.supply,
+                        amount,
+                        self.mint_lp.decimals as u32
+                    )
+                    .map_err(AmmError::from)?;
                 (amounts.x, amounts.y)
             }
         };
@@ -107,20 +114,21 @@ impl<'info> Deposit<'info> {
     }
 
     pub fn deposit_tokens(&mut self, amount: u64, is_x: bool) -> Result<()> {
-
         let (mint, provider_ata, vault, decimals) = match is_x {
-            true => (
-                self.mint_x.to_account_info(),
-                self.provider_ata_x.to_account_info(),
-                self.vault_x.to_account_info(),
-                self.mint_x.decimals,
-            ),
-            false => (
-                self.mint_y.to_account_info(),
-                self.provider_ata_y.to_account_info(),
-                self.vault_y.to_account_info(),
-                self.mint_y.decimals,
-            ),
+            true =>
+                (
+                    self.mint_x.to_account_info(),
+                    self.provider_ata_x.to_account_info(),
+                    self.vault_x.to_account_info(),
+                    self.mint_x.decimals,
+                ),
+            false =>
+                (
+                    self.mint_y.to_account_info(),
+                    self.provider_ata_y.to_account_info(),
+                    self.vault_y.to_account_info(),
+                    self.mint_y.decimals,
+                ),
         };
         let accounts = TransferChecked {
             from: provider_ata,
@@ -141,27 +149,32 @@ impl<'info> Deposit<'info> {
             authority: self.config.to_account_info(),
         };
 
-        let provider_key = self.provider.key().to_bytes();
         let mint_y = self.mint_y.key().to_bytes();
         let mint_x = self.mint_x.key().to_bytes();
         let seed = self.config.seed.to_le_bytes();
 
-        let seeds = [
-            b"config",
-            provider_key.as_ref(),
-            mint_x.as_ref(),
-            mint_y.as_ref(),
-            seed.as_ref(),
-        ];
+        //if adoption a PDA just for singing change these seeds
+        let seeds = [b"config", mint_x.as_ref(), mint_y.as_ref(), seed.as_ref()];
         let signer_seeds = &[&seeds[..]];
 
         let ctx = CpiContext::new_with_signer(
             self.token_program.to_account_info(),
             accounts,
-            signer_seeds,
+            signer_seeds
         );
         mint_to(ctx, amount)?;
 
         Ok(())
     }
 }
+
+/* 
+//-------------------- initialize.rs --------------------//
+3 - Initialize Vault X Token Account
+4 - Initialize Vault Y Token Account
+5 - Initialize Maker ATA X Token Account
+5 - Initialize Maker ATA Y Token Account
+6 - Initialize Maker ATA LP Token Account
+7 - Deposit Tokens
+8 - Mint LP Tokens
+*/
